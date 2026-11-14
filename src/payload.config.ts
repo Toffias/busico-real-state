@@ -26,6 +26,8 @@ export default buildConfig({
   editor: lexicalEditor(),
   db: sqliteAdapter({
     client: { url: process.env.DATABASE_URI ?? 'file:./busico.db' },
+    // En desarrollo el esquema se sincroniza solo; en producción se aplican estas migraciones.
+    migrationDir: path.resolve(dirname, 'migrations'),
   }),
   sharp,
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
