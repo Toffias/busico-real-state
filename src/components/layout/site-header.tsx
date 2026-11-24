@@ -9,7 +9,6 @@ import { Logo } from '../brand/logo';
 
 const NAV = [
   { href: '/propiedades', label: 'Propiedades' },
-  { href: '/propiedades?operacion=alquiler&tipo=local', label: 'Comerciales' },
   { href: '/nosotros', label: 'Nosotros' },
   { href: '/contacto', label: 'Contacto' },
 ] as const;
