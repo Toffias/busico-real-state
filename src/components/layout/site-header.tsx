@@ -25,17 +25,34 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    // `last` solo se mueve cuando el desplazamiento acumulado supera el umbral: así los
+    // micro-deltas de la inercia de Lenis no hacen que el header aparezca y desaparezca.
+    const THRESHOLD = 12;
     let last = window.scrollY;
-    const onScroll = () => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
       const y = window.scrollY;
       setScrolled(y > 40);
-      setHidden(y > 240 && y > last + 2);
-      if (y < last - 2) setHidden(false);
+      if (y < 240) {
+        setHidden(false);
+        last = y;
+        return;
+      }
+      const delta = y - last;
+      if (Math.abs(delta) < THRESHOLD) return;
+      setHidden(delta > 0);
       last = y;
     };
-    onScroll();
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
   }, []);
 
   useEffect(() => setOpen(false), [pathname]);
@@ -48,11 +65,22 @@ export function SiteHeader() {
     <>
       <header
         style={{ viewTransitionName: 'site-header' }}
-        className={`fixed inset-x-0 top-0 z-50 transition-[transform,background-color,backdrop-filter,padding] duration-700 ease-(--ease-luxe) ${
+        className={`fixed inset-x-0 top-0 z-50 transition-transform duration-500 ease-(--ease-luxe) will-change-transform ${
           hidden && !open ? '-translate-y-full' : 'translate-y-0'
-        } ${scrolled && !open ? 'bg-ink/75 py-3 backdrop-blur-xl' : 'bg-transparent py-6'}`}
+        }`}
       >
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between px-6 md:px-12">
+        {/* Fondo en su propia capa: se anima solo la opacidad (animar backdrop-filter parpadea). */}
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 bg-ink/75 backdrop-blur-xl transition-opacity duration-500 ${
+            scrolled && !open ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+        <div
+          className={`relative mx-auto flex max-w-[1600px] items-center justify-between px-6 transition-[padding] duration-500 ease-(--ease-luxe) md:px-12 ${
+            scrolled && !open ? 'py-3' : 'py-6'
+          }`}
+        >
           <Link href="/" aria-label="Busico Real Estate, inicio" className="relative z-10">
             <Logo compact />
           </Link>
